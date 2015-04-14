@@ -1,6 +1,7 @@
 package com.farmin.pert.jmob;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -125,7 +126,11 @@ public class MainActivity extends ActionBarActivity {
                         @Override
                         public void onItemClick(AdapterView<?> parent, View view,
                                                 int position, long id) {
-                            Toast.makeText(MainActivity.this, "You Clicked at " + deviceList.get(+position).get("dal.device.UID"), Toast.LENGTH_SHORT).show();
+                            String deviceUID = deviceList.get(+position).get("dal.device.UID");
+                            Toast.makeText(MainActivity.this, "You Clicked at " + deviceUID, Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(getApplicationContext(), DeviceActivity.class);
+                            intent.putExtra("deviceUID", deviceUID);
+                            startActivity(intent);
                         }
                     });
                 }
