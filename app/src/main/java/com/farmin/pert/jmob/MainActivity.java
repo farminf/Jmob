@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -128,8 +129,10 @@ public class MainActivity extends ActionBarActivity {
                                                 int position, long id) {
                             String deviceUID = deviceList.get(+position).get("dal.device.UID");
                             Toast.makeText(MainActivity.this, "You Clicked at " + deviceUID, Toast.LENGTH_SHORT).show();
+                            String deviceUIDNoSpace = deviceUID.replaceAll("\\s","%20");
                             Intent intent = new Intent(getApplicationContext(), DeviceActivity.class);
-                            intent.putExtra("deviceUID", deviceUID);
+                            Log.d("noSpace",deviceUIDNoSpace);
+                            intent.putExtra("deviceUID", deviceUIDNoSpace);
                             startActivity(intent);
                         }
                     });

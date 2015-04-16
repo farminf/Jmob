@@ -15,4 +15,9 @@
         android:text="New Text"
         android:id="@+id/tvFunctionOperations"
         android:layout_gravity="center_horizontal" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/tvFunctionProperty"
+        android:layout_gravity="center_horizontal" />
 </LinearLayout>

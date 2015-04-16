@@ -8,9 +8,13 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.Editable;
+import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -34,6 +38,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by pert on 14-Apr-15.
@@ -44,10 +49,14 @@ public class DeviceActivity extends Activity {
     ListView lvFunctions;
     TextView tvFunction;
     TextView tvDeviceName;
+    TextView tvFunctionProperty;
     TextView TvFunctionOperations;
+    TextView tvResponse;
     private final static String jsonDeviceFunction = "dal.function.UID";
     private final static String jsonDeviceFunctionOperations = "dal.function.operation.names";
+    private final static String jsonDeviceFunctionProperty = "dal.function.property.names";
     ArrayList<HashMap<String, String>> functionList = new ArrayList<HashMap<String, String>>();
+    AlertDialog.Builder builder;
 
 
 
@@ -62,6 +71,8 @@ public class DeviceActivity extends Activity {
         tvDeviceName.setText(EXTRA_MESSAGE);
         tvFunction = (TextView) findViewById(R.id.tvFunction);
         TvFunctionOperations = (TextView) findViewById(R.id.tvFunctionOperations);
+        tvFunctionProperty = (TextView) findViewById(R.id.tvFunctionProperty);
+        tvResponse = (TextView) findViewById(R.id.tvResponse);
         functionList = new ArrayList<HashMap<String, String>>();
 
 
@@ -103,19 +114,21 @@ public class DeviceActivity extends Activity {
 
                     String operations = c.getString(jsonDeviceFunctionOperations);
                     String function = c.getString(jsonDeviceFunction);
+                    String property = c.getString(jsonDeviceFunctionProperty);
                     // Adding value HashMap key => value
                     HashMap<String, String> map = new HashMap<String, String>();
                     //map.put(jsonDeviceStatus, status);
 
                     map.put(jsonDeviceFunction, function);
                     map.put(jsonDeviceFunctionOperations, operations);
+                    map.put(jsonDeviceFunctionProperty, property);
 
                     functionList.add(map);
                     lvFunctions =(ListView)findViewById(R.id.lvFunctions);
                     ListAdapter adapter = new SimpleAdapter(DeviceActivity.this, functionList,
                             R.layout.list_view2,
-                            new String[] { jsonDeviceFunction , jsonDeviceFunctionOperations }, new int[] {
-                            R.id.tvFunction,R.id.tvFunctionOperations});
+                            new String[] { jsonDeviceFunction , jsonDeviceFunctionOperations , jsonDeviceFunctionProperty }, new int[] {
+                            R.id.tvFunction,R.id.tvFunctionOperations , R.id.tvFunctionProperty});
                     lvFunctions.setAdapter(adapter);
                     lvFunctions.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                         @Override
@@ -123,8 +136,11 @@ public class DeviceActivity extends Activity {
                                                 int position, long id) {
                             String deviceFunctionUID = functionList.get(+position).get(jsonDeviceFunction);
                             String deviceFunctionOperation = functionList.get(position).get(jsonDeviceFunctionOperations);
-                            Toast.makeText(DeviceActivity.this, "You Clicked at " + deviceFunctionUID + deviceFunctionOperation , Toast.LENGTH_SHORT).show();
-                            onCreateDialog();
+                            String functionUIDNoSpace = deviceFunctionUID.replaceAll("\\s","%20");
+                            //Toast.makeText(DeviceActivity.this, "You Clicked at " + deviceFunctionUID + deviceFunctionOperation , Toast.LENGTH_SHORT).show();
+                            onCreateDialog(functionUIDNoSpace);
+                            builder.show();
+
 //                            Intent intent = new Intent(getApplicationContext(), DeviceActivity.class);
 //                            intent.putExtra("deviceUID", deviceUID);
 //                            startActivity(intent);
@@ -139,40 +155,53 @@ public class DeviceActivity extends Activity {
 
     }
 
-    public Dialog onCreateDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
+    public void onCreateDialog(String functionUIDURL) {
+        builder = new AlertDialog.Builder(new ContextThemeWrapper(DeviceActivity.this,R.style.dialog ));
+        final String URL = "http://130.192.86.173/api/functions/" + functionUIDURL;
         // Get the layout inflater
-        LayoutInflater inflater = getLayoutInflater();
+        //LayoutInflater inflater = getLayoutInflater();
+        final EditText inputOPT = new EditText(getApplicationContext());
+        inputOPT.findViewById(R.id.EToperation);
+
+        builder.setView(inputOPT);
 
         // Inflate and set the layout for the dialog
         // Pass null as the parent view because its going in the dialog layout
-        builder.setView(inflater.inflate(R.layout.dialog_operation, null))
+       // builder.setView(inflater.inflate(R.layout.dialog_operation, null))
                 // Add action buttons
-                .setPositiveButton("Send", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int id) {
-
-                    }
-                })
+                builder.setMessage("Insert your Operation")
+                       .setPositiveButton("Send", new DialogInterface.OnClickListener() {
+                           @Override
+                           public void onClick(DialogInterface dialog, int id) {
+//                               try {
+                               Editable input = inputOPT.getText();
+                               String customMSGInput = input.toString();
+                               Log.d("ttt",customMSGInput);
+                               //JsonParser jparsen = new JsonParser();
+                               //JSONArray newArray = jparsen.getJson("http://130.192.86.173/api/functions/ZigBee:Smart%20Info:ah.app.3521399293212622892-1:EnergyMeter");
+                               //postHTTP("getCurrent", "ZigBee:Smart%20Info:ah.app.3521399293212622892-1:EnergyMeter");
+                               AsyncTask<String, Void, String> gg = new com.farmin.pert.jmob.AsyncTask().execute(URL ,customMSGInput );
+                               String answer = null;
+                               try {
+                                   answer = gg.get();
+                               } catch (InterruptedException e) {
+                                   e.printStackTrace();
+                               } catch (ExecutionException e) {
+                                   e.printStackTrace();
+                               }
+                               Toast.makeText(getApplicationContext(),answer,Toast.LENGTH_LONG).show();
+                               tvResponse.setText(answer);
+//                               } catch (IOException e) {
+//                                   e.printStackTrace();
+//                               }
+                           }
+                       })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
 
                     }
                 });
-        return builder.create();
+         builder.create();
     }
-    public HttpResponse postHTTP (String operation, String Device) throws IOException {
-        // Create a new HttpClient and Post Header
-        HttpClient httpclient = new DefaultHttpClient();
-        HttpPost httppost = new HttpPost("http://www.yoursite.com/script.php");
-        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
-        nameValuePairs.add(new BasicNameValuePair("operation","getData"));
-        httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-        // Execute HTTP Post Request
-        HttpResponse response = null;
 
-        response = httpclient.execute(httppost);
-
-        return response;
-    }
 }
